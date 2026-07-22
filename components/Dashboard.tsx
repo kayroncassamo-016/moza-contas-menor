@@ -51,8 +51,15 @@ export default function Dashboard({ result }: { result: ParsedResult }) {
     { name: "Superior a 3 meses", value: superior3m.current ?? 0, fill: GOLD },
   ];
 
-  const barData = [
-    { name: "Maioridade\natingida", value: atingida.current ?? 0 },
+  // const barData = [
+  //   { name: "Maioridade\natingida", value: atingida.current ?? 0 },
+  //   { name: "Por atingir\nmaioridade", value: porAtingir.current ?? 0 },
+  //   { name: "Próx.\n3 meses", value: proximos3m.current ?? 0 },
+  //   { name: "Superior a\n3 meses", value: superior3m.current ?? 0 },
+  // ];
+
+   const barData = [
+    { name: "Maioridade\n\natingida", value: atingida.current ?? 0 },
     { name: "Por atingir\nmaioridade", value: porAtingir.current ?? 0 },
     { name: "Próx.\n3 meses", value: proximos3m.current ?? 0 },
     { name: "Superior a\n3 meses", value: superior3m.current ?? 0 },
@@ -243,12 +250,37 @@ export default function Dashboard({ result }: { result: ParsedResult }) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barData}>
                 <CartesianGrid vertical={false} stroke={LINE} />
-                <XAxis
+                {/* <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11, fill: "#6B6864" }}
                   axisLine={{ stroke: LINE }}
                   tickLine={false}
-                />
+                /> */}
+
+                <XAxis
+  dataKey="name"
+  tick={({ x, y, payload }) => {
+    const lines = payload.value.split("\n");
+
+    return (
+      <text
+        x={x}
+        y={y + 10}
+        textAnchor="middle"
+        fill="#6B6864"
+        fontSize={11}
+      >
+        {lines.map((line: string, index: number) => (
+          <tspan key={index} x={x} dy={index === 0 ? 0 : 14}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    );
+  }}
+  axisLine={{ stroke: LINE }}
+  tickLine={false}
+/>
                 <YAxis
                   tick={{ fontSize: 11, fill: "#6B6864" }}
                   axisLine={false}
