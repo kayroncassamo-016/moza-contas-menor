@@ -7,7 +7,9 @@ interface SlotProps {
   title: string;
   hint: string;
   onFile: (file: File) => void;
-  isLoading: boolean;
+   isLoading: boolean;
+//   isPlanoLoading: boolean;
+// isContasMenorLoading: boolean;
   fileName: string | null;
 }
 
@@ -74,7 +76,9 @@ function Slot({ title, hint, onFile, isLoading, fileName }: SlotProps) {
 interface Props {
   onPlanoFile: (file: File) => void;
   onContasMenorFile: (file: File) => void;
-  isLoading: boolean;
+  // isLoading: boolean;
+  isPlanoLoading:boolean,
+  isContasMenorLoading:boolean,
   error: string | null;
   planoFileName: string | null;
   contasMenorFileName: string | null;
@@ -83,7 +87,9 @@ interface Props {
 export default function UploadZone({
   onPlanoFile,
   onContasMenorFile,
-  isLoading,
+  // isLoading,
+  isPlanoLoading,
+  isContasMenorLoading,
   error,
   planoFileName,
   contasMenorFileName,
@@ -95,14 +101,16 @@ export default function UploadZone({
           title="1. Plano de Actividades"
           hint="ficheiro .xlsx com a aba “Mapa de acompanhamento”"
           onFile={onPlanoFile}
-          isLoading={isLoading}
+          // isLoading={isLoading}
+           isLoading={isPlanoLoading}
           fileName={planoFileName}
         />
         <Slot
           title="2. Contas Menor"
           hint="ficheiro .xlsx com a lista de contas e datas de nascimento"
           onFile={onContasMenorFile}
-          isLoading={isLoading}
+          // isLoading={isLoading}
+           isLoading={isContasMenorLoading}
           fileName={contasMenorFileName}
         />
       </div>

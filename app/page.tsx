@@ -22,6 +22,8 @@ export default function Home() {
   const [cmParsed, setCmParsed] = useState<ContasMenorResult | null>(null);
   const [result, setResult] = useState<ParsedResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isContasMenorLoading, setIsContasMenorLoading] = useState(false);
+  const [isPlanoLoading, setPlanoIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function recombine(plano: ParsedResult | null, cm: ContasMenorResult | null) {
@@ -114,7 +116,9 @@ export default function Home() {
         <UploadZone
           onPlanoFile={handlePlanoFile}
           onContasMenorFile={handleContasMenorFile}
-          isLoading={isLoading}
+          // isLoading={isLoading}
+          isPlanoLoading={isPlanoLoading}
+          isContasMenorLoading={isContasMenorLoading}
           error={error}
           planoFileName={planoFile?.name ?? null}
           contasMenorFileName={contasMenorFile?.name ?? null}
