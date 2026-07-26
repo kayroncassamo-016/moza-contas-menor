@@ -13,7 +13,7 @@ interface SlotProps {
   fileName: string | null;
 }
 
-function Slot({ title, hint, onFile, isLoading, fileName }: SlotProps) {
+export function Slot({ title, hint, onFile, isLoading, fileName }: SlotProps) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
