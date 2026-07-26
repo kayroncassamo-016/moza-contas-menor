@@ -51,12 +51,7 @@ export default function Dashboard({ result }: { result: ParsedResult }) {
     { name: "Superior a 3 meses", value: superior3m.current ?? 0, fill: GOLD },
   ];
 
-  // const barData = [
-  //   { name: "Maioridade\natingida", value: atingida.current ?? 0 },
-  //   { name: "Por atingir\nmaioridade", value: porAtingir.current ?? 0 },
-  //   { name: "Próx.\n3 meses", value: proximos3m.current ?? 0 },
-  //   { name: "Superior a\n3 meses", value: superior3m.current ?? 0 },
-  // ];
+
 
    const barData = [
     { name: "Maioridade\n\natingida", value: atingida.current ?? 0 },
