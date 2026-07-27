@@ -1,3 +1,5 @@
+
+
 // import * as XLSX from "xlsx";
 
 // export interface PeriodValue {
@@ -63,7 +65,7 @@
 //  * que precisa de ser calculada a partir do ficheiro Contas Menor.
 //  */
 // export function parsePlanoWorkbook(buffer: ArrayBuffer): ParsedResult {
-//   const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+//   const wb = XLSX.read(buffer, { type: "array" }); // sem cellDates: evita bug de fuso horário (ver formatMonthCell)
 
 //   let sheetName = wb.SheetNames.find((n) => normalize(n).includes("mapa"));
 //   if (!sheetName) {
@@ -114,8 +116,17 @@
 //     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 //   ];
 //   function formatMonthCell(raw: unknown): string {
+//     // As células de mês são datas do Excel guardadas como número de série.
+//     // NUNCA converter via `new Date(serial)` + cellDates:true — o SheetJS
+//     // desloca a data segundo o fuso horário do browser, o que troca o mês
+//     // (ex: em UTC+2, Julho aparece como Junho). Ler o número de série
+//     // directamente com SSF.parse_date_code() evita qualquer fuso horário.
+//     if (typeof raw === "number") {
+//       const d = XLSX.SSF.parse_date_code(raw);
+//       if (d) return `${MONTH_NAMES_PT[d.m - 1]} ${d.y}`;
+//     }
 //     if (raw instanceof Date) {
-//       return `${MONTH_NAMES_PT[raw.getMonth()]} ${raw.getFullYear()}`;
+//       return `${MONTH_NAMES_PT[raw.getUTCMonth()]} ${raw.getUTCFullYear()}`;
 //     }
 //     return String(raw).trim();
 //   }
@@ -228,7 +239,7 @@
 //  * no próprio ficheiro (coluna "Dia", se existir).
 //  */
 // export function parseContasMenorWorkbook(buffer: ArrayBuffer): ContasMenorResult {
-//   const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+//   const wb = XLSX.read(buffer, { type: "array" }); // sem cellDates: evita bug de fuso horário (ver formatMonthCell)
 
 //   // Um ficheiro Contas Menor costuma ter várias folhas (ex: uma tabela
 //   // dinâmica de apoio e a lista "achatada" de contas). Escolhemos, entre as
@@ -638,60 +649,45 @@ export function parsePlanoWorkbook(buffer: ArrayBuffer): ParsedResult {
 export function parseContasMenorWorkbook(buffer: ArrayBuffer): ContasMenorResult {
   const wb = XLSX.read(buffer, { type: "array" }); // sem cellDates: evita bug de fuso horário (ver formatMonthCell)
 
-  // Um ficheiro Contas Menor costuma ter várias folhas (ex: uma tabela
-  // dinâmica de apoio e a lista "achatada" de contas). Escolhemos, entre as
-  // folhas candidatas, a que tem uma linha por conta (sem duplicados) —
-  // é essa a lista real de contas, não a tabela dinâmica.
+  // Escolhe a folha que tem as colunas necessárias (não confiar em "menos
+  // duplicados" — esse era o bug: um ficheiro já vinha pré-filtrado por
+  // outra pessoa e escondia a necessidade real do filtro).
   let headerRowIdx = -1;
-  let sheetName = "";
   let rows: unknown[][] = [];
-  let bestRatio = -1;
 
   for (const name of wb.SheetNames) {
     const r: unknown[][] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: null });
-    let candidateHeaderRow = -1;
     for (let i = 0; i < Math.min(5, r.length); i++) {
       const rowNorm = (r[i] || []).map(normalize);
-      if (rowNorm.includes("conta") && rowNorm.some((c) => c.includes("nascimento"))) {
-        candidateHeaderRow = i;
+      if (
+        rowNorm.includes("conta") &&
+        rowNorm.includes("cliente") &&
+        rowNorm.includes("classe componente") &&
+        rowNorm.some((c) => c.includes("nascimento"))
+      ) {
+        headerRowIdx = i;
+        rows = r;
         break;
       }
     }
-    if (candidateHeaderRow === -1) continue;
-
-    const header = (r[candidateHeaderRow] || []).map(normalize);
-    const contaColIdx = header.findIndex((c) => c === "conta");
-    let ratio = 0;
-    if (contaColIdx !== -1) {
-      const contas: unknown[] = [];
-      for (let i = candidateHeaderRow + 1; i < r.length; i++) {
-        const v = r[i]?.[contaColIdx];
-        if (v !== null && v !== undefined) contas.push(v);
-      }
-      ratio = contas.length > 0 ? new Set(contas).size / contas.length : 0;
-    }
-    if (ratio > bestRatio) {
-      bestRatio = ratio;
-      headerRowIdx = candidateHeaderRow;
-      sheetName = name;
-      rows = r;
-    }
+    if (headerRowIdx !== -1) break;
   }
 
   if (headerRowIdx === -1) {
     throw new PlanoParseError(
-      "Não encontrei, neste ficheiro, as colunas 'Conta' e 'Data de Nascimento'. Confirme que carregou o ficheiro Contas Menor correcto."
+      "Não encontrei, neste ficheiro, as colunas 'Conta', 'Cliente', 'Classe Componente' e 'Data de Nascimento'. Confirme que carregou o ficheiro Contas Menor (bruto) correcto."
     );
   }
 
   const header = (rows[headerRowIdx] || []).map(normalize);
   const nascCol = header.findIndex((c) => c.includes("nascimento"));
   const diaCol = header.findIndex((c) => c === "dia");
+  const clienteCol = header.findIndex((c) => c === "cliente");
+  const classeComponenteCol = header.findIndex((c) => c === "classe componente");
 
   function toDate(v: unknown): Date | null {
     if (v instanceof Date) return v;
     if (typeof v === "number") {
-      // número de série do Excel
       const d = XLSX.SSF.parse_date_code(v);
       if (d) return new Date(d.y, d.m - 1, d.d);
       return null;
@@ -700,18 +696,38 @@ export function parseContasMenorWorkbook(buffer: ArrayBuffer): ContasMenorResult
       const parts = v.split(/[\/\-]/);
       if (parts.length === 3) {
         const [a, b, c] = parts.map((p) => parseInt(p, 10));
-        // assume DD/MM/AAAA
         if (a && b && c) return new Date(c, b - 1, a);
       }
     }
     return null;
   }
 
-  // Data de reporte: usar a coluna "Dia" da 1ª linha de dados; senão, hoje.
+  function normVal(v: unknown): string {
+    return String(v ?? "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim().toUpperCase();
+  }
+
+  const dataRows = rows.slice(headerRowIdx + 1);
+
+  // Filtro 1: Classe Componente = "DO" (Depósitos à Ordem) — exclui CCO, DP,
+  // DS, CARC, GARR, CRR e células vazias.
+  const doRows = dataRows.filter((r) => normVal(r[classeComponenteCol]) === "DO");
+
+  // Filtro 2: remover duplicados por Cliente (um cliente pode ter várias
+  // contas/produtos; só deve contar uma vez).
+  const seen = new Set<unknown>();
+  const uniqueRows: unknown[][] = [];
+  for (const r of doRows) {
+    const key = r[clienteCol];
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniqueRows.push(r);
+  }
+
+  // Data de reporte: usar a coluna "Dia" da 1ª linha; senão, hoje.
   let reportDate: Date | null = null;
   if (diaCol !== -1) {
-    for (let r = headerRowIdx + 1; r < rows.length; r++) {
-      const raw = rows[r]?.[diaCol];
+    for (const r of dataRows) {
+      const raw = r[diaCol];
       if (raw === null || raw === undefined) continue;
       if (typeof raw === "number" && String(raw).length === 8) {
         const s = String(raw);
@@ -732,9 +748,8 @@ export function parseContasMenorWorkbook(buffer: ArrayBuffer): ContasMenorResult
   let proximos3m = 0;
   let porAtingir = 0;
 
-  for (let r = headerRowIdx + 1; r < rows.length; r++) {
-    const raw = rows[r]?.[nascCol];
-    const birth = toDate(raw);
+  for (const r of uniqueRows) {
+    const birth = toDate(r[nascCol]);
     if (!birth) continue;
     total++;
     const age18 = new Date(birth);
