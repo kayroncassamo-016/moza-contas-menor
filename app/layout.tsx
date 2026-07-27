@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Clientes e contas · Moza Banco",
   description:
-    "Raio-X automático das Contas Menor a partir do Plano de Actividades DCC.",
+    "Raio-X automático de relatórios manuais no DCC.",
 };
 
 export default function RootLayout({
