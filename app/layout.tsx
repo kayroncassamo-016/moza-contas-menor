@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Contas Menor · Moza Banco",
+  title: "Clientes e contas · Moza Banco",
   description:
     "Raio-X automático das Contas Menor a partir do Plano de Actividades DCC.",
 };
