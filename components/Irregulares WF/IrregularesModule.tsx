@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import IrregularesUploadZone from "@/components/IrregularesUploadZone";
-import IrregularesDashboard from "@/components/IrregularesDashboard";
+import IrregularesUploadZone from "@/components/Irregulares WF/IrregularesUploadZone";
+import IrregularesDashboard from "@/components/Irregulares WF/IrregularesDashboard";
 import {
   parseIrregularesRawWorkbook,
   parseIrregularesFromPlano,

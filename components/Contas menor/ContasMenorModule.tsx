@@ -116,7 +116,7 @@
 
 import { useState } from "react";
 import UploadZone from "@/components/UploadZone";
-import Dashboard from "@/components/Dashboard";
+import Dashboard from "@/components/Contas menor/Dashboard";
 import {
   parsePlanoWorkbook,
   parseContasMenorWorkbook,

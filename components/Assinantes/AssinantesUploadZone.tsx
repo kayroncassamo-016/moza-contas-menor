@@ -48,7 +48,7 @@
 // }
 "use client";
 
-import { Slot } from "./UploadZone";
+import { Slot } from "../UploadZone";
 
 interface Props {
   onPlanoFile: (file: File) => void;

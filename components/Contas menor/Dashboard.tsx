@@ -22,8 +22,8 @@ import {
   Bar,
 } from "recharts";
 import type { ParsedResult } from "@/lib/parsePlano";
-import KpiCard from "./KpiCard";
-import MajorityClock from "./MajorityClock";
+import KpiCard from "../KpiCard";
+import MajorityClock from "../MajorityClock";
 
 const RED = "#D0021B";
 const GOLD = "#E8A33D";

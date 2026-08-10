@@ -16,7 +16,7 @@ import {
   Bar,
 } from "recharts";
 import type { AssinantesPlanoResult, AssinantesRawResult } from "@/lib/parseAssinantes";
-import KpiCard from "./KpiCard";
+import KpiCard from "../KpiCard";
 
 const RED = "#D0021B";
 const GOLD = "#E8A33D";
