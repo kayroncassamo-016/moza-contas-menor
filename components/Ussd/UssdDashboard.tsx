@@ -91,6 +91,20 @@ export default function UssdDashboard({
           icon={AlertTriangle}
           accent="gold"
         />
+        <KpiCard 
+          label="Convergentes (universo total)" 
+          value={raw.convergentesTotal} 
+          deltaPct={null} 
+          icon={CheckCircle2} 
+          accent="ink" 
+        />
+        <KpiCard 
+          label="Divergentes (universo total)" 
+          value={raw.divergentesTotal} 
+          deltaPct={null} 
+          icon={AlertTriangle} 
+          accent="gold" 
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

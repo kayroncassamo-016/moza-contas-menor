@@ -21,6 +21,11 @@ export interface UssdResult {
   divergentes: number;
   divergentesEntidades: string[]; // COD_ENT dos contactos divergentes
   serieDiaria: UssdDaily[];
+
+
+  convergentesTotal: number;
+  divergentesTotal: number;
+  divergentesEntidadesTotal: string[];
 }
 
 function normalize(v: unknown): string {
@@ -323,10 +328,6 @@ export function parseUssdWorkbook(buffer: ArrayBuffer): UssdResult {
   }
   if (!refDate) throw new UssdParseError("Não consegui interpretar nenhuma DATA_ADESAO válida no ficheiro.");
 
-  // refDate = dia mais recente do ficheiro. A referência da semana é o
-  // PENÚLTIMO dia (refDate - 1), não o último — por pedido explícito.
-  // Ex: último dia = 23 -> referência = 22 -> janela = 16 a 22 (7 dias).
-  //refDate.setDate(refDate.getDate() - 1);
 
   const createdDate = wb.Props?.CreatedDate ? new Date(wb.Props.CreatedDate) : null;
   const sameDay =
@@ -360,6 +361,22 @@ export function parseUssdWorkbook(buffer: ArrayBuffer): UssdResult {
     }
   }
 
+  let convergentesTotal = 0;
+  let divergentesTotal = 0;
+const divergentesEntidadesTotal: string[] = [];
+for (const r of step2) {
+  const ussd = normPhone(r[colUssd]);
+  const b1 = normPhone(r[colB1]);
+  const b2 = normPhone(r[colB2]);
+  const b3 = normPhone(r[colB3]);
+  const bate = ussd !== null && (ussd === b1 || ussd === b2 || ussd === b3);
+  if (bate) convergentesTotal++;
+  else {
+    divergentesTotal++;
+    if (colEnt) divergentesEntidadesTotal.push(String(r[colEnt] ?? "—"));
+  }
+}
+
   const dailyMap = new Map<string, number>();
   for (const r of semana) {
     const d = parseDataAdesao(r[colData]);
@@ -382,5 +399,10 @@ export function parseUssdWorkbook(buffer: ArrayBuffer): UssdResult {
     divergentes,
     divergentesEntidades,
     serieDiaria,
+
+
+  convergentesTotal,
+  divergentesTotal,
+  divergentesEntidadesTotal,
   };
 }
