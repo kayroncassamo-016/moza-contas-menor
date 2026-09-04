@@ -1,5 +1,4 @@
 
-
 import * as XLSX from "xlsx";
 import type { PeriodValue } from "./parsePlano";
 
@@ -14,6 +13,10 @@ export interface EactRawResult {
   totalBruto: number;
   encerradas: number;
   entidadesSoltas: number;
+  
+  totalEntidades: number;
+  fiabilizadas: number;
+  porFiabilizar: number;
 }
 
 /**

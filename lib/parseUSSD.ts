@@ -240,14 +240,68 @@ export function mergeUssdIntoPlano(plano: UssdPlanoResult, raw: UssdResult): Uss
 //   return new Date(2000 + parseInt(yy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
 // }
 
+const MONTH_ABBR: Record<string, number> = {
+  JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5,
+  JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11,
+};
+
+// function parseDataAdesao(v: unknown): Date | null {
+//   if (v === null || v === undefined) return null;
+//   // Formato texto "AA.MM.DD"
+//   const m = String(v).trim().match(/^(\d{2})\.(\d{2})\.(\d{2})$/);
+//   if (m) {
+//     const [, yy, mm, dd] = m;
+//     return new Date(2000 + parseInt(yy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+//   }
+//   // Formato número de série do Excel (célula formatada como data)
+//   if (typeof v === "number") {
+//     const d = XLSX.SSF.parse_date_code(v);
+//     if (d) return new Date(d.y, d.m - 1, d.d);
+//   }
+//   return null;
+// }
+
+// Números vêm em formatos diferentes (com/sem espaço) — normaliza antes de comparar.
+
 function parseDataAdesao(v: unknown): Date | null {
   if (v === null || v === undefined) return null;
-  // Formato texto "AA.MM.DD"
-  const m = String(v).trim().match(/^(\d{2})\.(\d{2})\.(\d{2})$/);
-  if (m) {
-    const [, yy, mm, dd] = m;
+  const s = String(v).trim();
+ 
+  // Formato texto "AA.MM.DD" (pontos)
+  const m1 = s.match(/^(\d{2})\.(\d{2})\.(\d{2})$/);
+  if (m1) {
+    const [, yy, mm, dd] = m1;
     return new Date(2000 + parseInt(yy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
   }
+ 
+  // Formato texto "DD-MMM-AA" (ex: "17-APR-23", "31-JUL-26")
+  const m2 = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2})$/);
+  if (m2) {
+    const [, dd, mon, yy] = m2;
+    const monthIdx = MONTH_ABBR[mon.toUpperCase()];
+    if (monthIdx !== undefined) {
+      return new Date(2000 + parseInt(yy, 10), monthIdx, parseInt(dd, 10));
+    }
+  }
+ 
+// Formato texto "MM/DD/AA" ou "MM/DD/AAAA" (barras)
+const m3 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+
+if (m3) {
+    const [, mm, dd, yyRaw] = m3;
+
+    const year =
+        yyRaw.length === 2
+            ? 2000 + parseInt(yyRaw, 10)
+            : parseInt(yyRaw, 10);
+
+    return new Date(
+        year,
+        parseInt(mm, 10) - 1,
+        parseInt(dd, 10)
+    );
+}
+
   // Formato número de série do Excel (célula formatada como data)
   if (typeof v === "number") {
     const d = XLSX.SSF.parse_date_code(v);
@@ -256,7 +310,7 @@ function parseDataAdesao(v: unknown): Date | null {
   return null;
 }
 
-// Números vêm em formatos diferentes (com/sem espaço) — normaliza antes de comparar.
+
 function normPhone(v: unknown): string | null {
   if (v === null || v === undefined || v === "") return null;
   return String(v).trim().replace(/[\s-]/g, "").split(".")[0];
