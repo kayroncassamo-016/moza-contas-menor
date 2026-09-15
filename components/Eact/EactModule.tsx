@@ -72,7 +72,7 @@ export default function EactModule() {
       <section className="mb-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-moza-red">EACT Mensal</p>
         <h1 className="font-display text-3xl font-semibold leading-tight text-moza-ink sm:text-4xl">
-          Encerradas eyuyu Entidades Soltas.
+          Encerradas e Entidades Soltas.
         </h1>
       </section>
 
